@@ -9,68 +9,83 @@
     :root {
       color-scheme: light;
       font-family: system-ui, sans-serif;
-      color: #112f3c;
-      background: #f0f7f8;
+      color: #4e1929;
+      background: transparent;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; }
-    main { max-width: 74rem; margin: auto; padding: clamp(.75rem, 3vw, 2rem); }
+    body { margin: 0; background: transparent; }
+    main { max-width: 74rem; margin: auto; padding: .55rem; }
+    h1 { margin: 0; font-size: clamp(1.35rem, 3.6vw, 2rem); line-height: 1.15; letter-spacing: -.035em; }
     .toolbar, .navigation { display: flex; align-items: center; gap: .55rem; }
     .toolbar[hidden] { display: none; }
-    .toolbar { justify-content: space-between; flex-wrap: wrap; margin-bottom: 1rem; }
-    .navigation { flex: 1 1 16rem; max-width: 27rem; }
+    .toolbar { justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: .75rem; }
+    .navigation { margin-top: .25rem; gap: .35rem; }
+    .range { margin: .1rem 0 0; text-align: right; }
+    .range small, .range strong { display: block; }
+    .range small { font-weight: 700; }
     button {
       font: inherit;
-      color: #124c56;
+      color: inherit;
       font-weight: 650;
-      background: #eef7f8;
-      border: 1px solid #bcd8dc;
-      border-radius: .65rem;
-      min-height: 2.75rem;
-      min-width: 2.75rem;
-      padding: .45rem .75rem;
+      background: transparent;
+      border: 1px solid #8c354968;
+      border-radius: .35rem;
+      min-height: 2rem;
+      min-width: 2rem;
+      padding: .2rem .4rem;
+      font-size: .76rem;
       cursor: pointer;
     }
-    button:hover { background: #d7edf0; }
-    :focus-visible { outline: 3px solid #087782; outline-offset: 3px; }
-    .navigation button { flex: none; font-size: 1.35rem; line-height: 1; }
-    #date { flex: 1; text-align: center; margin: 0; font-size: clamp(.95rem, 2.5vw, 1.25rem); }
+    button:hover { background: #8c354914; }
+    :focus-visible { outline: 2px solid #8c3549; outline-offset: 2px; }
+    #date { margin: 0; font-size: .85rem; }
     #date::first-letter { text-transform: uppercase; }
     .notice { margin: 0 0 .75rem; padding: .65rem .85rem; background: #fff4dc; border-radius: .5rem; }
-    a { color: #075d69; }
-    .scroller { overflow: auto; border: 1px solid #c6dde2; border-radius: .75rem; background: white; }
-    .board { min-width: 39rem; }
-    .grid { display: grid; grid-template-columns: 3.5rem repeat(6, minmax(0, 1fr)); }
-    .heads { color: white; background: #0b3c50; font-weight: 700; text-align: center; font-size: .85rem; }
-    .heads span { padding: .65rem .2rem; border-right: 1px solid #ffffff25; }
-    .timeline { height: 32rem; margin: .5rem 0; }
-    .axis, .lane { position: relative; border-right: 1px solid #c6dde2; }
-    .lane { background: #f0faf9; }
-    .timeline[data-state="error"] .lane, .timeline[data-state="loading"] .lane { background: #edf1f3; }
-    .tick { position: absolute; font-size: .7rem; font-variant-numeric: tabular-nums; }
-    .axis .tick { right: .45rem; transform: translateY(-50%); }
-    .lane .tick { width: 100%; border-top: 1px solid #ccdee3; }
-    .block { position: absolute; inset-inline: 2px; display: grid; place-items: center; overflow: hidden; border-radius: .25rem; background: #156c85; color: white; font-weight: 650; font-size: .72rem; }
-    .block.short { color: transparent; }
-    .lane:last-child { border: 0; background-color: #ebf7f9; }
-    @media (max-width: 42rem) { .board { min-width: 34rem; } }
+    a { color: inherit; }
+    .scroller { overflow: auto; }
+    .board { min-width: 35rem; }
+    .grid { display: grid; grid-template-columns: 3.5rem repeat(6, minmax(0, 1fr)); gap: .3rem; }
+    .heads { font-weight: 750; text-align: center; font-size: .8rem; }
+    .heads span { padding: .55rem 0; }
+    .timeline { position: relative; height: 26rem; margin: .5rem 0 .75rem; }
+    .axis, .lane { position: relative; }
+    .lane { background: #cba96a1c; border: 1px solid #4e192932; border-radius: .15rem; }
+    .timeline[data-state="error"] .lane, .timeline[data-state="loading"] .lane { background: #7771; }
+    .tick { position: absolute; font-size: .72rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .axis .tick { right: .35rem; transform: translateY(-50%); }
+    .lane .tick { width: 100%; border-top: 1px solid #4e192925; }
+    .lane .tick:first-child, .lane .tick:last-of-type { border-color: transparent; }
+    .block { position: absolute; inset-inline: 1px; display: flex; align-items: center; padding-inline: .25rem; overflow: hidden; border-radius: .12rem; background: #8c3549; color: white; white-space: nowrap; font-weight: 750; font-size: .69rem; }
+    .block.short { font-size: .58rem; }
+    .now { position: absolute; z-index: 1; inset-inline: 3.6rem 0; border-top: 2px solid #df4e20; pointer-events: none; }
+    .now::before { content: ""; position: absolute; top: -5px; left: -4px; width: 8px; height: 8px; border-radius: 50%; background: #df4e20; }
+    .occupancy, .legend { font-size: .8rem; }
+    .occupancy { padding: .55rem .75rem; border-radius: .35rem; background: #8c354917; }
+    .legend { margin: .25rem 0 0; }
+    .legend::before { content: ""; display: inline-block; width: .8em; height: .8em; margin-right: .35rem; background: #8c3549; border-radius: .1rem; }
   </style>
 </head>
 <body>
   <main>
     <section aria-label="Planning journalier de la piscine">
       <div class="toolbar" id="toolbar" hidden>
-        <div class="navigation">
-          <button type="button" id="previous" aria-label="Jour précédent">‹</button>
-          <h2 id="date" aria-live="polite"></h2>
-          <button type="button" id="next" aria-label="Jour suivant">›</button>
+        <div>
+          <h1>Le planning des couloirs</h1>
+          <div class="navigation">
+            <button type="button" id="previous" aria-label="Jour précédent">‹</button>
+            <p id="date" aria-live="polite"></p>
+            <button type="button" id="next" aria-label="Jour suivant">›</button>
+            <button type="button" id="today">Aujourd’hui</button>
+          </div>
         </div>
-        <button type="button" id="today">Aujourd’hui</button>
+        <p class="range"><small>Plage affichée</small><strong id="range"></strong></p>
       </div>
+      <p class="occupancy" id="occupancy" hidden></p>
       <div class="notice" role="status" id="notice">
         <strong id="status">Planning indisponible</strong>
         <a id="fallback" href="https://rca-andennaise.big-captain.com/public/calendar/230?resources_id=5747&amp;resources_id=6013&amp;resources_id=6014&amp;resources_id=6015&amp;resources_id=6016&amp;resources_id=6017&amp;resources_id=6018&amp;hideFilters=true&amp;showResourceNameAsTitle=true" target="_blank" rel="noopener">Calendrier officiel BigCaptain</a>
       </div>
+      <p class="legend" id="legend" hidden>Activité réservée</p>
       <div class="scroller" tabindex="0" role="region" aria-label="Planning par couloir, défilement horizontal sur mobile">
         <div class="board">
           <div class="grid heads">
@@ -109,6 +124,7 @@
       timeline.dataset.state = state;
       notice.hidden = state === 'ready';
       fallback.hidden = state !== 'error';
+      document.getElementById('legend').hidden = state !== 'ready';
       status.textContent = title;
     }
 
@@ -160,10 +176,42 @@
 
     // These are display windows from Aquavision, not confirmation of public opening.
     const windows = [[480, 780], [420, 1140], [510, 1260], [420, 1080], [510, 1140], [420, 1140], [720, 1140]];
+    const clock = new Intl.DateTimeFormat('en-GB', { timeZone: poolTimeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    const nowLine = document.createElement('div');
+    nowLine.className = 'now';
+    nowLine.setAttribute('aria-hidden', 'true');
+    let visibleWindow;
+
+    function updateNow() {
+      if (!visibleWindow) return;
+      const { date, from, to } = visibleWindow;
+      const now = minutes(clock.format(new Date()));
+      nowLine.hidden = date !== todayInAndenne().toISOString().slice(0, 10) || now < from || now > to;
+      nowLine.style.top = (now - from) / (to - from) * 100 + '%';
+    }
+
+    function showFullOccupancy(lanes) {
+      const edges = [...new Set(lanes.flatMap(lane => lane.flatMap(({ start, end }) => [start, end])))].sort((a, b) => a - b);
+      const full = [];
+      for (let i = 1; i < edges.length; i++) {
+        const start = edges[i - 1];
+        const end = edges[i];
+        if (!lanes.every(lane => lane.some(slot => slot.start <= start && slot.end >= end))) continue;
+        const previous = full.at(-1);
+        if (previous?.end === start) previous.end = end;
+        else full.push({ start, end });
+      }
+      const notice = document.getElementById('occupancy');
+      notice.hidden = full.length === 0;
+      notice.textContent = full.length ? 'Cinq couloirs occupés · ' + full.map(({ start, end }) => formatTime(start) + '–' + formatTime(end)).join(' · ') : '';
+    }
 
     function renderOccupancy(date, grouped) {
       const [from, to] = windows[new Date(date + 'T12:00:00Z').getUTCDay()];
+      visibleWindow = { date, from, to };
+      document.getElementById('range').textContent = formatTime(from) + ' – ' + formatTime(to);
       const position = value => (value - from) / (to - from) * 100 + '%';
+      const swimmingLanes = [];
       const ticks = [from];
       for (let hour = Math.ceil((from + 20) / 60) * 60; hour <= to - 25; hour += 60) ticks.push(hour);
       ticks.push(to);
@@ -193,23 +241,26 @@
           const end = Math.min(to, event.end);
           if (end <= start) continue;
           const last = intervals.at(-1);
-          if (last && start <= last.end) last.end = Math.max(last.end, end);
+          if (last && start < last.end) last.end = Math.max(last.end, end);
           else intervals.push({ start, end });
         }
+        if (id !== 6018) swimmingLanes.push(intervals);
 
         for (const { start, end } of intervals) {
           const block = document.createElement('span');
           block.className = (end - start) / (to - from) < .035 ? 'block short' : 'block';
           block.style.top = position(start);
           block.style.bottom = (to - end) / (to - from) * 100 + '%';
-          block.textContent = 'Occupé';
-          block.title = formatTime(start) + '–' + formatTime(end) + ' · Occupé';
+          block.textContent = formatTime(start) + '–' + formatTime(end);
+          block.title = block.textContent + ' · Activité réservée';
           block.setAttribute('aria-label', block.title);
           column.append(block);
         }
         return column;
       });
-      timeline.replaceChildren(...columns);
+      timeline.replaceChildren(...columns, nowLine);
+      showFullOccupancy(swimmingLanes);
+      updateNow();
     }
 
     async function loadDate(date) {
@@ -252,6 +303,7 @@
       showDate();
     });
     showDate();
+    setInterval(updateNow, 15000);
     document.getElementById('toolbar').hidden = false;
   </script>
 </body>
