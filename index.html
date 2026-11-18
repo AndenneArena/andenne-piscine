@@ -53,6 +53,7 @@
     #date::first-letter { text-transform: uppercase; }
     .notice { background: #fff5df; border: 1px solid #f0d8a1; border-radius: .8rem; color: #563a13; padding: .85rem 1rem; }
     .notice p { margin: .25rem 0 0; }
+    .notice[data-state="ready"] { background: #eff9f5; border-color: #bfdfd4; color: #194a3e; }
     .resources {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
@@ -65,6 +66,8 @@
     .resources li:last-child { border-top-color: #15816c; background: #eff9f5; }
     .resources h3 { margin: 0 0 .25rem; font-size: 1rem; }
     .resources p { margin: 0; color: #4a646e; font-size: .875rem; }
+    .slots { display: grid; gap: .35rem; list-style: none; margin: .5rem 0 0; padding: 0; }
+    .resources .slots li { background: #e1f0f4; border: 0; padding: .35rem .45rem; font-size: .85rem; }
     footer { display: flex; gap: .4rem 1.25rem; flex-wrap: wrap; color: #4a646e; font-size: .875rem; }
     a { color: #075d69; text-underline-offset: .18em; }
     @media (max-width: 37rem) {
@@ -91,9 +94,9 @@
         </div>
         <button type="button" id="today">Aujourd’hui</button>
       </div>
-      <div class="notice">
-        <strong>Planning indisponible</strong>
-        <p>Les données d’occupation BigCaptain ne sont pas accessibles dans ce planning.</p>
+      <div class="notice" role="status" id="notice">
+        <strong id="status">Planning indisponible</strong>
+        <p id="detail">Le chargement des occupations nécessite JavaScript.</p>
       </div>
       <ul class="resources" aria-label="Espaces de la piscine">
         <li><h3>Couloir 1</h3><p>Statut inconnu</p></li>
@@ -103,9 +106,13 @@
         <li><h3>Couloir 5</h3><p>Statut inconnu</p></li>
         <li><h3>Pataugeoire</h3><p>Statut inconnu</p></li>
       </ul>
+      <div id="general" hidden>
+        <h3>Piscine · occupations générales</h3>
+        <ul class="slots" id="general-slots"></ul>
+      </div>
       <footer>
         <a href="https://www.andennesports.be/fr/shop-en-ligne" target="_blank" rel="noopener">Horaires publics de la piscine</a>
-        <a href="https://my.big-captain.com/site/rca-andennaise/home" target="_blank" rel="noopener">Ouvrir BigCaptain</a>
+        <a href="https://rca-andennaise.big-captain.com/public/calendar/230?resources_id=5747&amp;resources_id=6013&amp;resources_id=6014&amp;resources_id=6015&amp;resources_id=6016&amp;resources_id=6017&amp;resources_id=6018&amp;hideFilters=true&amp;showResourceNameAsTitle=true" target="_blank" rel="noopener">Ouvrir le calendrier public BigCaptain</a>
       </footer>
     </section>
   </main>
@@ -124,12 +131,119 @@
 
     let selectedDate = todayInAndenne();
     const heading = document.getElementById('date');
+    const resourceIds = [6013, 6014, 6015, 6016, 6017, 6018];
+    const poolId = 5747;
+    const cards = [...document.querySelectorAll('.resources > li')];
+    const general = document.getElementById('general');
+    const status = document.getElementById('status');
+    const detail = document.getElementById('detail');
+    let activeRequest;
+
+    function setStatus(state, title, description) {
+      document.getElementById('notice').dataset.state = state;
+      status.textContent = title;
+      detail.textContent = description;
+    }
+
+    async function getBookings(date, signal) {
+      const url = new URL('https://api.big-captain.com/public-api/v1/230/be/booking-events');
+      url.searchParams.set('date', date);
+      url.searchParams.set('status', 'confirmed');
+      url.searchParams.set('per_page', '500');
+      for (const id of [poolId, ...resourceIds]) url.searchParams.append('resources_id[]', id);
+      const bookings = [];
+      for (let page = 1; page <= 100; page++) {
+        url.searchParams.set('page', page);
+        const response = await fetch(url, { credentials: 'omit', signal, cache: 'no-store' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const result = await response.json();
+        if (!Array.isArray(result.data)) throw new Error('Format BigCaptain inattendu');
+        bookings.push(...result.data);
+        if (page >= (result.meta?.last_page ?? result.last_page ?? 1)) return bookings;
+      }
+      throw new Error('Pagination BigCaptain incomplète');
+    }
+
+    function minutes(value) {
+      if (typeof value !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$|^24:00(?::00)?$/.test(value)) {
+        throw new Error('Heure BigCaptain invalide');
+      }
+      return Number(value.slice(0, 2)) * 60 + Number(value.slice(3, 5));
+    }
+
+    function formatTime(value) {
+      return String(Math.floor(value / 60)).padStart(2, '0') + ':' + String(value % 60).padStart(2, '0');
+    }
+
+    function occupancyByResource(events, date) {
+      const grouped = new Map([poolId, ...resourceIds].map(id => [id, []]));
+      for (const event of events) {
+        const intervals = grouped.get(Number(event.resource_id));
+        if (!intervals || event.date !== date || event.deleted_at || (event.status && event.status !== 'confirmed')) continue;
+        const start = minutes(event.start_time);
+        const end = minutes(event.end_time) || 1440;
+        if (end <= start) throw new Error('Créneau BigCaptain invalide');
+        intervals.push({ start, end });
+      }
+      for (const intervals of grouped.values()) {
+        intervals.sort((a, b) => a.start - b.start || a.end - b.end);
+      }
+      return grouped;
+    }
+
+    function slotItems(intervals) {
+      return intervals.map(({ start, end }) => {
+        const item = document.createElement('li');
+        item.textContent = formatTime(start) + '–' + formatTime(end) + ' · Occupé';
+        return item;
+      });
+    }
+
+    function renderOccupancy(grouped, pending = false) {
+      cards.forEach((card, index) => {
+        card.querySelector('.slots')?.remove();
+        const intervals = grouped?.get(resourceIds[index]);
+        card.querySelector('p').textContent = pending ? 'Chargement…' : !intervals
+          ? 'Statut inconnu' : intervals.length ? 'Occupations confirmées' : 'Aucune occupation confirmée';
+        if (intervals?.length) {
+          const list = document.createElement('ul');
+          list.className = 'slots';
+          list.append(...slotItems(intervals));
+          card.append(list);
+        }
+      });
+      const pool = grouped?.get(poolId) ?? [];
+      general.hidden = pool.length === 0;
+      document.getElementById('general-slots').replaceChildren(...slotItems(pool));
+    }
+
+    async function loadDate(date) {
+      activeRequest?.abort();
+      const request = new AbortController();
+      activeRequest = request;
+      const timer = setTimeout(() => request.abort(), 15000);
+      setStatus('loading', 'Chargement du planning', 'Consultation du calendrier public BigCaptain.');
+      renderOccupancy(null, true);
+      try {
+        const bookings = await getBookings(date, request.signal);
+        if (activeRequest !== request) return;
+        renderOccupancy(occupancyByResource(bookings, date));
+        setStatus('ready', 'Occupations confirmées', 'Vérifiez les horaires publics avant votre visite.');
+      } catch {
+        if (activeRequest !== request) return;
+        renderOccupancy(null);
+        setStatus('error', 'Planning indisponible', 'Impossible de lire les occupations BigCaptain. Vous pouvez ouvrir le calendrier public ci-dessous.');
+      } finally {
+        clearTimeout(timer);
+      }
+    }
 
     function showDate() {
       const time = document.createElement('time');
       time.dateTime = selectedDate.toISOString().slice(0, 10);
       time.textContent = dateLabel.format(selectedDate);
       heading.replaceChildren(time);
+      loadDate(time.dateTime);
     }
 
     function moveDay(offset) {
