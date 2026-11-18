@@ -77,7 +77,7 @@
             <button type="button" id="today">Aujourd’hui</button>
           </div>
         </div>
-        <p class="range"><small>Plage affichée</small><strong id="range"></strong></p>
+        <p class="range"><small>Heure d’ouverture</small><strong id="range"></strong></p>
       </div>
       <p class="occupancy" id="occupancy" role="status" hidden></p>
       <div class="notice" role="status" id="notice">
@@ -248,8 +248,8 @@
         for (const { start, end } of intervals) {
           const block = document.createElement('span');
           block.className = (end - start) / (to - from) < .035 ? 'block short' : 'block';
-          block.style.top = position(start);
-          block.style.bottom = (to - end) / (to - from) * 100 + '%';
+          block.style.top = 'calc(' + position(start) + ' + 1px)';
+          block.style.bottom = 'calc(' + ((to - end) / (to - from) * 100) + '% + 1px)';
           block.textContent = formatTime(start) + '–' + formatTime(end);
           block.title = 'Réservation · ' + block.textContent;
           block.setAttribute('aria-label', block.title);
