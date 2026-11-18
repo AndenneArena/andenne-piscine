@@ -15,21 +15,6 @@
     * { box-sizing: border-box; }
     body { margin: 0; }
     main { max-width: 74rem; margin: auto; padding: clamp(.75rem, 3vw, 2rem); }
-    header {
-      padding: clamp(1.25rem, 5vw, 3rem);
-      color: white;
-      background: linear-gradient(115deg, #0b2d40, #075763);
-      border-radius: 1.25rem;
-    }
-    header p { margin: 0 0 .5rem; color: #b2e5e8; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; font-size: .78rem; }
-    h1 { margin: 0; font-size: clamp(1.65rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -.04em; }
-    section {
-      margin-top: 1rem;
-      padding: clamp(.9rem, 3vw, 1.65rem);
-      border: 1px solid #cbdfe3;
-      border-radius: 1.25rem;
-      background: white;
-    }
     .toolbar, .navigation { display: flex; align-items: center; gap: .55rem; }
     .toolbar[hidden] { display: none; }
     .toolbar { justify-content: space-between; flex-wrap: wrap; margin-bottom: 1rem; }
@@ -51,41 +36,29 @@
     .navigation button { flex: none; font-size: 1.35rem; line-height: 1; }
     #date { flex: 1; text-align: center; margin: 0; font-size: clamp(.95rem, 2.5vw, 1.25rem); }
     #date::first-letter { text-transform: uppercase; }
-    .notice { background: #fff5df; border: 1px solid #f0d8a1; border-radius: .8rem; color: #563a13; padding: .85rem 1rem; }
-    .notice p { margin: .25rem 0 0; }
-    .notice[data-state="ready"] { background: #eff9f5; border-color: #bfdfd4; color: #194a3e; }
-    .resources {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
-      gap: .65rem;
-      list-style: none;
-      padding: 0;
-      margin: 1rem 0;
-    }
-    .resources li { padding: .85rem; border: 1px solid #cde0e4; border-top: .25rem solid #39818d; border-radius: .75rem; background: #f4fafb; }
-    .resources li:last-child { border-top-color: #15816c; background: #eff9f5; }
-    .resources h3 { margin: 0 0 .25rem; font-size: 1rem; }
-    .resources p { margin: 0; color: #4a646e; font-size: .875rem; }
-    .slots { display: grid; gap: .35rem; list-style: none; margin: .5rem 0 0; padding: 0; }
-    .resources .slots li { background: #e1f0f4; border: 0; padding: .35rem .45rem; font-size: .85rem; }
-    footer { display: flex; gap: .4rem 1.25rem; flex-wrap: wrap; color: #4a646e; font-size: .875rem; }
-    a { color: #075d69; text-underline-offset: .18em; }
-    @media (max-width: 37rem) {
-      .navigation { max-width: none; }
-      .resources { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media (max-width: 19rem) {
-      .resources { grid-template-columns: 1fr; }
-    }
+    .notice { margin: 0 0 .75rem; padding: .65rem .85rem; background: #fff4dc; border-radius: .5rem; }
+    a { color: #075d69; }
+    .scroller { overflow: auto; border: 1px solid #c6dde2; border-radius: .75rem; background: white; }
+    .board { min-width: 39rem; }
+    .grid { display: grid; grid-template-columns: 3.5rem repeat(6, minmax(0, 1fr)); }
+    .heads { color: white; background: #0b3c50; font-weight: 700; text-align: center; font-size: .85rem; }
+    .heads span { padding: .65rem .2rem; border-right: 1px solid #ffffff25; }
+    .timeline { height: 32rem; margin: .5rem 0; }
+    .axis, .lane { position: relative; border-right: 1px solid #c6dde2; }
+    .lane { background: #f0faf9; }
+    .timeline[data-state="error"] .lane, .timeline[data-state="loading"] .lane { background: #edf1f3; }
+    .tick { position: absolute; font-size: .7rem; font-variant-numeric: tabular-nums; }
+    .axis .tick { right: .45rem; transform: translateY(-50%); }
+    .lane .tick { width: 100%; border-top: 1px solid #ccdee3; }
+    .block { position: absolute; inset-inline: 2px; display: grid; place-items: center; overflow: hidden; border-radius: .25rem; background: #156c85; color: white; font-weight: 650; font-size: .72rem; }
+    .block.short { color: transparent; }
+    .lane:last-child { border: 0; background-color: #ebf7f9; }
+    @media (max-width: 42rem) { .board { min-width: 34rem; } }
   </style>
 </head>
 <body>
   <main>
-    <header>
-      <p>Andenne Sports · Piscine</p>
-      <h1>Occupation des bassins</h1>
-    </header>
-    <section aria-label="Planning journalier">
+    <section aria-label="Planning journalier de la piscine">
       <div class="toolbar" id="toolbar" hidden>
         <div class="navigation">
           <button type="button" id="previous" aria-label="Jour précédent">‹</button>
@@ -96,24 +69,16 @@
       </div>
       <div class="notice" role="status" id="notice">
         <strong id="status">Planning indisponible</strong>
-        <p id="detail">Le chargement des occupations nécessite JavaScript.</p>
+        <a id="fallback" href="https://rca-andennaise.big-captain.com/public/calendar/230?resources_id=5747&amp;resources_id=6013&amp;resources_id=6014&amp;resources_id=6015&amp;resources_id=6016&amp;resources_id=6017&amp;resources_id=6018&amp;hideFilters=true&amp;showResourceNameAsTitle=true" target="_blank" rel="noopener">Calendrier officiel BigCaptain</a>
       </div>
-      <ul class="resources" aria-label="Espaces de la piscine">
-        <li><h3>Couloir 1</h3><p>Statut inconnu</p></li>
-        <li><h3>Couloir 2</h3><p>Statut inconnu</p></li>
-        <li><h3>Couloir 3</h3><p>Statut inconnu</p></li>
-        <li><h3>Couloir 4</h3><p>Statut inconnu</p></li>
-        <li><h3>Couloir 5</h3><p>Statut inconnu</p></li>
-        <li><h3>Pataugeoire</h3><p>Statut inconnu</p></li>
-      </ul>
-      <div id="general" hidden>
-        <h3>Piscine · occupations générales</h3>
-        <ul class="slots" id="general-slots"></ul>
+      <div class="scroller" tabindex="0" role="region" aria-label="Planning par couloir, défilement horizontal sur mobile">
+        <div class="board">
+          <div class="grid heads">
+            <span>Heure</span><span>Couloir 1</span><span>Couloir 2</span><span>Couloir 3</span><span>Couloir 4</span><span>Couloir 5</span><span>Pataugeoire</span>
+          </div>
+          <div class="grid timeline" id="timeline" data-state="error"></div>
+        </div>
       </div>
-      <footer>
-        <a href="https://www.andennesports.be/fr/shop-en-ligne" target="_blank" rel="noopener">Horaires publics de la piscine</a>
-        <a href="https://rca-andennaise.big-captain.com/public/calendar/230?resources_id=5747&amp;resources_id=6013&amp;resources_id=6014&amp;resources_id=6015&amp;resources_id=6016&amp;resources_id=6017&amp;resources_id=6018&amp;hideFilters=true&amp;showResourceNameAsTitle=true" target="_blank" rel="noopener">Ouvrir le calendrier public BigCaptain</a>
-      </footer>
     </section>
   </main>
   <script>
@@ -133,16 +98,18 @@
     const heading = document.getElementById('date');
     const resourceIds = [6013, 6014, 6015, 6016, 6017, 6018];
     const poolId = 5747;
-    const cards = [...document.querySelectorAll('.resources > li')];
-    const general = document.getElementById('general');
+    const names = ['Couloir 1', 'Couloir 2', 'Couloir 3', 'Couloir 4', 'Couloir 5', 'Pataugeoire'];
+    const timeline = document.getElementById('timeline');
     const status = document.getElementById('status');
-    const detail = document.getElementById('detail');
+    const notice = document.getElementById('notice');
+    const fallback = document.getElementById('fallback');
     let activeRequest;
 
-    function setStatus(state, title, description) {
-      document.getElementById('notice').dataset.state = state;
+    function setStatus(state, title = '') {
+      timeline.dataset.state = state;
+      notice.hidden = state === 'ready';
+      fallback.hidden = state !== 'error';
       status.textContent = title;
-      detail.textContent = description;
     }
 
     async function getBookings(date, signal) {
@@ -191,30 +158,58 @@
       return grouped;
     }
 
-    function slotItems(intervals) {
-      return intervals.map(({ start, end }) => {
-        const item = document.createElement('li');
-        item.textContent = formatTime(start) + '–' + formatTime(end) + ' · Occupé';
-        return item;
-      });
-    }
+    // These are display windows from Aquavision, not confirmation of public opening.
+    const windows = [[480, 780], [420, 1140], [510, 1260], [420, 1080], [510, 1140], [420, 1140], [720, 1140]];
 
-    function renderOccupancy(grouped, pending = false) {
-      cards.forEach((card, index) => {
-        card.querySelector('.slots')?.remove();
-        const intervals = grouped?.get(resourceIds[index]);
-        card.querySelector('p').textContent = pending ? 'Chargement…' : !intervals
-          ? 'Statut inconnu' : intervals.length ? 'Occupations confirmées' : 'Aucune occupation confirmée';
-        if (intervals?.length) {
-          const list = document.createElement('ul');
-          list.className = 'slots';
-          list.append(...slotItems(intervals));
-          card.append(list);
+    function renderOccupancy(date, grouped) {
+      const [from, to] = windows[new Date(date + 'T12:00:00Z').getUTCDay()];
+      const position = value => (value - from) / (to - from) * 100 + '%';
+      const ticks = [from];
+      for (let hour = Math.ceil((from + 20) / 60) * 60; hour <= to - 25; hour += 60) ticks.push(hour);
+      ticks.push(to);
+
+      const columns = [null, ...resourceIds].map((id, index) => {
+        const column = document.createElement('div');
+        column.className = id === null ? 'axis' : 'lane';
+        if (id !== null) {
+          column.setAttribute('role', 'group');
+          column.setAttribute('aria-label', names[index - 1]);
         }
+        for (const tick of ticks) {
+          const mark = document.createElement('span');
+          mark.className = 'tick';
+          mark.style.top = position(tick);
+          if (id === null) mark.textContent = formatTime(tick);
+          column.append(mark);
+        }
+        if (!grouped || id === null) return column;
+
+        const events = [...grouped.get(id)];
+        if (id !== 6018) events.push(...grouped.get(poolId));
+        events.sort((a, b) => a.start - b.start);
+        const intervals = [];
+        for (const event of events) {
+          const start = Math.max(from, event.start);
+          const end = Math.min(to, event.end);
+          if (end <= start) continue;
+          const last = intervals.at(-1);
+          if (last && start <= last.end) last.end = Math.max(last.end, end);
+          else intervals.push({ start, end });
+        }
+
+        for (const { start, end } of intervals) {
+          const block = document.createElement('span');
+          block.className = (end - start) / (to - from) < .035 ? 'block short' : 'block';
+          block.style.top = position(start);
+          block.style.bottom = (to - end) / (to - from) * 100 + '%';
+          block.textContent = 'Occupé';
+          block.title = formatTime(start) + '–' + formatTime(end) + ' · Occupé';
+          block.setAttribute('aria-label', block.title);
+          column.append(block);
+        }
+        return column;
       });
-      const pool = grouped?.get(poolId) ?? [];
-      general.hidden = pool.length === 0;
-      document.getElementById('general-slots').replaceChildren(...slotItems(pool));
+      timeline.replaceChildren(...columns);
     }
 
     async function loadDate(date) {
@@ -222,17 +217,16 @@
       const request = new AbortController();
       activeRequest = request;
       const timer = setTimeout(() => request.abort(), 15000);
-      setStatus('loading', 'Chargement du planning', 'Consultation du calendrier public BigCaptain.');
-      renderOccupancy(null, true);
+      setStatus('loading', 'Chargement…');
+      renderOccupancy(date);
       try {
         const bookings = await getBookings(date, request.signal);
         if (activeRequest !== request) return;
-        renderOccupancy(occupancyByResource(bookings, date));
-        setStatus('ready', 'Occupations confirmées', 'Vérifiez les horaires publics avant votre visite.');
+        renderOccupancy(date, occupancyByResource(bookings, date));
+        setStatus('ready');
       } catch {
         if (activeRequest !== request) return;
-        renderOccupancy(null);
-        setStatus('error', 'Planning indisponible', 'Impossible de lire les occupations BigCaptain. Vous pouvez ouvrir le calendrier public ci-dessous.');
+        setStatus('error', 'Planning indisponible · ');
       } finally {
         clearTimeout(timer);
       }
