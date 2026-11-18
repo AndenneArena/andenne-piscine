@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="fr-BE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Planning d’occupation des cinq couloirs et de la pataugeoire de la piscine d’Andenne.">
+  <title>Planning de la piscine d’Andenne</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, sans-serif;
+      color: #112f3c;
+      background: #f0f7f8;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 74rem; margin: auto; padding: clamp(.75rem, 3vw, 2rem); }
+    header {
+      padding: clamp(1.25rem, 5vw, 3rem);
+      color: white;
+      background: linear-gradient(115deg, #0b2d40, #075763);
+      border-radius: 1.25rem;
+    }
+    header p { margin: 0 0 .5rem; color: #b2e5e8; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; font-size: .78rem; }
+    h1 { margin: 0; font-size: clamp(1.65rem, 5vw, 3.2rem); line-height: 1.08; letter-spacing: -.04em; }
+    section {
+      margin-top: 1rem;
+      padding: clamp(.9rem, 3vw, 1.65rem);
+      border: 1px solid #cbdfe3;
+      border-radius: 1.25rem;
+      background: white;
+    }
+    .toolbar, .navigation { display: flex; align-items: center; gap: .55rem; }
+    .toolbar[hidden] { display: none; }
+    .toolbar { justify-content: space-between; flex-wrap: wrap; margin-bottom: 1rem; }
+    .navigation { flex: 1 1 16rem; max-width: 27rem; }
+    button {
+      font: inherit;
+      color: #124c56;
+      font-weight: 650;
+      background: #eef7f8;
+      border: 1px solid #bcd8dc;
+      border-radius: .65rem;
+      min-height: 2.75rem;
+      min-width: 2.75rem;
+      padding: .45rem .75rem;
+      cursor: pointer;
+    }
+    button:hover { background: #d7edf0; }
+    :focus-visible { outline: 3px solid #087782; outline-offset: 3px; }
+    .navigation button { flex: none; font-size: 1.35rem; line-height: 1; }
+    #date { flex: 1; text-align: center; margin: 0; font-size: clamp(.95rem, 2.5vw, 1.25rem); }
+    #date::first-letter { text-transform: uppercase; }
+    .notice { background: #fff5df; border: 1px solid #f0d8a1; border-radius: .8rem; color: #563a13; padding: .85rem 1rem; }
+    .notice p { margin: .25rem 0 0; }
+    .resources {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+      gap: .65rem;
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+    }
+    .resources li { padding: .85rem; border: 1px solid #cde0e4; border-top: .25rem solid #39818d; border-radius: .75rem; background: #f4fafb; }
+    .resources li:last-child { border-top-color: #15816c; background: #eff9f5; }
+    .resources h3 { margin: 0 0 .25rem; font-size: 1rem; }
+    .resources p { margin: 0; color: #4a646e; font-size: .875rem; }
+    footer { display: flex; gap: .4rem 1.25rem; flex-wrap: wrap; color: #4a646e; font-size: .875rem; }
+    a { color: #075d69; text-underline-offset: .18em; }
+    @media (max-width: 37rem) {
+      .navigation { max-width: none; }
+      .resources { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 19rem) {
+      .resources { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p>Andenne Sports · Piscine</p>
+      <h1>Occupation des bassins</h1>
+    </header>
+    <section aria-label="Planning journalier">
+      <div class="toolbar" id="toolbar" hidden>
+        <div class="navigation">
+          <button type="button" id="previous" aria-label="Jour précédent">‹</button>
+          <h2 id="date" aria-live="polite"></h2>
+          <button type="button" id="next" aria-label="Jour suivant">›</button>
+        </div>
+        <button type="button" id="today">Aujourd’hui</button>
+      </div>
+      <div class="notice">
+        <strong>Planning indisponible</strong>
+        <p>Les données d’occupation BigCaptain ne sont pas accessibles dans ce planning.</p>
+      </div>
+      <ul class="resources" aria-label="Espaces de la piscine">
+        <li><h3>Couloir 1</h3><p>Statut inconnu</p></li>
+        <li><h3>Couloir 2</h3><p>Statut inconnu</p></li>
+        <li><h3>Couloir 3</h3><p>Statut inconnu</p></li>
+        <li><h3>Couloir 4</h3><p>Statut inconnu</p></li>
+        <li><h3>Couloir 5</h3><p>Statut inconnu</p></li>
+        <li><h3>Pataugeoire</h3><p>Statut inconnu</p></li>
+      </ul>
+      <footer>
+        <a href="https://www.andennesports.be/fr/shop-en-ligne" target="_blank" rel="noopener">Horaires publics de la piscine</a>
+        <a href="https://my.big-captain.com/site/rca-andennaise/home" target="_blank" rel="noopener">Ouvrir BigCaptain</a>
+      </footer>
+    </section>
+  </main>
+  <script>
+    const poolTimeZone = 'Europe/Brussels';
+    const localDate = new Intl.DateTimeFormat('fr-BE', {
+      timeZone: poolTimeZone, year: 'numeric', month: 'numeric', day: 'numeric'
+    });
+    const dateLabel = new Intl.DateTimeFormat('fr-BE', { timeZone: 'UTC', dateStyle: 'full' });
+
+    function todayInAndenne() {
+      const parts = Object.fromEntries(localDate.formatToParts(new Date()).map(({ type, value }) => [type, value]));
+      // Store a calendar date in UTC so changing days is independent of daylight saving time.
+      return new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)));
+    }
+
+    let selectedDate = todayInAndenne();
+    const heading = document.getElementById('date');
+
+    function showDate() {
+      const time = document.createElement('time');
+      time.dateTime = selectedDate.toISOString().slice(0, 10);
+      time.textContent = dateLabel.format(selectedDate);
+      heading.replaceChildren(time);
+    }
+
+    function moveDay(offset) {
+      selectedDate.setUTCDate(selectedDate.getUTCDate() + offset);
+      showDate();
+    }
+
+    document.getElementById('previous').addEventListener('click', () => moveDay(-1));
+    document.getElementById('next').addEventListener('click', () => moveDay(1));
+    document.getElementById('today').addEventListener('click', () => {
+      selectedDate = todayInAndenne();
+      showDate();
+    });
+    showDate();
+    document.getElementById('toolbar').hidden = false;
+  </script>
+</body>
+</html>
