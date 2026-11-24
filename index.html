@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Planning d’occupation des cinq couloirs et de la pataugeoire de la piscine d’Andenne.">
+  <title>Planning de la piscine d’Andenne</title>
   <style>
     :root {
       color-scheme: light;
@@ -13,12 +14,12 @@
     }
     * { box-sizing: border-box; }
     body { margin: 0; background: transparent; }
-    main { max-width: 74rem; margin: auto; padding: .55rem; }
-    h1 { margin: 0; color: #526347; font-size: clamp(1.35rem, 3.6vw, 2rem); line-height: 1.15; letter-spacing: -.035em; }
+    main { max-width: 82rem; margin: auto; padding: .55rem; }
     .toolbar, .navigation { display: flex; align-items: center; gap: .55rem; }
     .toolbar[hidden] { display: none; }
     .toolbar { justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: .75rem; }
-    .navigation { margin-top: .25rem; gap: .35rem; }
+    .navigation { margin-top: .25rem; gap: .35rem; flex-wrap: wrap; }
+    .date-picker { font: inherit; font-size: .8rem; color: inherit; background: transparent; border: 1px solid #768468; border-radius: .35rem; min-height: 2rem; padding: .15rem .35rem; }
     .range { margin: .1rem 0 0; text-align: right; }
     .range small, .range strong { display: block; }
     .range small { font-weight: 700; }
@@ -61,17 +62,33 @@
     .occupancy { padding: .5rem .7rem; border-left: .25rem solid #59684d; font-weight: 750; }
     .legend { margin: .25rem 0 0; }
     .legend::before { content: ""; display: inline-block; width: .8em; height: .8em; margin-right: .35rem; background: #59684d; border-radius: .1rem; }
+    #date, .heads, .legend, .occupancy, .week { font-size: .95rem; }
+    .tick, .block { font-size: .8rem; }
+    .timeline { height: 30rem; }
+    .week { margin: 1.15rem 0 0; line-height: 1.4; }
+    .week h2 { margin: 0 0 .45rem; color: #526347; font-size: 1.05rem; }
+    .week-navigation { display: flex; align-items: center; gap: .55rem; margin-bottom: .45rem; }
+    .week-navigation h2 { margin: 0; }
+    .week table { width: 100%; border-collapse: collapse; }
+    .week th, .week td { text-align: left; padding: .45rem .65rem; border-bottom: 1px solid #76846855; }
+    .week thead th { border-bottom: 2px solid #768468; color: #526347; font-size: .85rem; }
+    .week tbody th { width: 9rem; font-weight: 650; }
+    .week td { font-variant-numeric: tabular-nums; }
+    .week td[data-state="reserved"] { color: #46563d; font-weight: 750; }
   </style>
 </head>
 <body>
   <main>
     <section aria-label="Planning journalier de la piscine">
       <div class="toolbar" id="toolbar" hidden>
-         <div class="navigation">
-           <button type="button" id="previous" aria-label="Jour précédent">‹</button>
-           <p id="date" aria-live="polite"></p>
-           <button type="button" id="next" aria-label="Jour suivant">›</button>
-           <button type="button" id="today">Aujourd’hui</button>
+        <div>
+          <div class="navigation">
+            <button type="button" id="previous" aria-label="Jour précédent">‹</button>
+            <p id="date" aria-live="polite"></p>
+            <button type="button" id="next" aria-label="Jour suivant">›</button>
+            <button type="button" id="today">Aujourd’hui</button>
+            <input type="date" class="date-picker" id="date-picker" aria-label="Accéder à une date précise">
+          </div>
         </div>
         <p class="range"><small>Heure d’ouverture</small><strong id="range"></strong></p>
       </div>
@@ -89,6 +106,18 @@
           <div class="grid timeline" id="timeline" data-state="error"></div>
         </div>
       </div>
+      <section class="week" aria-labelledby="week-title">
+        <div class="week-navigation">
+          <button type="button" id="previous-week" aria-label="Semaine précédente">‹</button>
+          <h2 id="week-title" aria-live="polite">Indisponibilités du grand bassin</h2>
+          <button type="button" id="next-week" aria-label="Semaine suivante">›</button>
+        </div>
+        <p id="week-status" role="status" hidden></p>
+        <table id="week-table" aria-labelledby="week-title" hidden>
+          <thead><tr><th scope="col">Jour</th><th scope="col">Créneaux d’indisponibilité</th></tr></thead>
+          <tbody id="week-days"></tbody>
+        </table>
+      </section>
     </section>
   </main>
   <script>
@@ -171,6 +200,47 @@
 
     // These are display windows from Aquavision, not confirmation of public opening.
     const windows = [[480, 780], [420, 1140], [510, 1260], [420, 1080], [510, 1140], [420, 1140], [720, 1140]];
+    // Horaire de vacances repris du flyer de la piscine d’Andenne Arena.
+    const vacationWindows = [[480, 780], [720, 1080], [720, 1080], [720, 1080], [720, 1080], [720, 1080], [780, 1080]];
+    // Calendrier de l’enseignement obligatoire de la Fédération Wallonie-Bruxelles.
+    const schoolBreaks = [
+      ['2026-10-19', '2026-11-02'], ['2026-12-21', '2027-01-03'],
+      ['2027-02-09', '2027-02-09'], ['2027-02-22', '2027-03-07'],
+      ['2027-04-26', '2027-05-09'], ['2027-07-03', '2027-08-29'],
+      ['2027-09-27', '2027-09-27'], ['2027-10-25', '2027-11-07'],
+      ['2027-12-27', '2028-01-09'], ['2028-02-28', '2028-03-12'],
+      ['2028-05-01', '2028-05-14'], ['2028-07-08', '2028-08-27'],
+      ['2028-09-27', '2028-09-27'], ['2028-10-23', '2028-11-05'],
+      ['2028-12-25', '2029-01-07'], ['2029-02-13', '2029-02-13'],
+      ['2029-02-26', '2029-03-11'], ['2029-04-30', '2029-05-13']
+    ];
+    const fixedHolidays = new Set(['01-01', '05-01', '07-21', '08-15', '11-01', '11-11', '12-25']);
+    const yearEndClosure = {
+      start: '2026-12-24',
+      end: '2027-01-03',
+      label: 'Piscine fermée du 24 décembre 2026 au 3 janvier 2027 inclus'
+    };
+
+    function easterSunday(year) {
+      // Comput grégorien de Meeus/Jones/Butcher.
+      const cycle = year % 19;
+      const century = Math.floor(year / 100);
+      const remainder = year % 100;
+      const epact = (19 * cycle + century - Math.floor(century / 4) -
+        Math.floor((century - Math.floor((century + 8) / 25) + 1) / 3) + 15) % 30;
+      const weekday = (32 + 2 * (century % 4) + 2 * Math.floor(remainder / 4) - epact - remainder % 4) % 7;
+      const correction = Math.floor((cycle + 11 * epact + 22 * weekday) / 451);
+      const value = epact + weekday - 7 * correction + 114;
+      return new Date(Date.UTC(year, Math.floor(value / 31) - 1, value % 31 + 1));
+    }
+
+    function closureLabel(date) {
+      if (date >= yearEndClosure.start && date <= yearEndClosure.end) return yearEndClosure.label;
+      if (date === '2026-11-02' || fixedHolidays.has(date.slice(5))) return 'Piscine fermée';
+      const day = new Date(date + 'T00:00:00Z');
+      const offset = (day - easterSunday(day.getUTCFullYear())) / 86400000;
+      return offset === 1 || offset === 39 || offset === 50 ? 'Piscine fermée' : '';
+    }
     const clock = new Intl.DateTimeFormat('en-GB', { timeZone: poolTimeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
     const nowLine = document.createElement('div');
     nowLine.className = 'now';
@@ -185,7 +255,7 @@
       nowLine.style.top = (now - from) / (to - from) * 100 + '%';
     }
 
-    function showFullOccupancy(lanes) {
+    function fullOccupancy(lanes) {
       const edges = [...new Set(lanes.flatMap(lane => lane.flatMap(({ start, end }) => [start, end])))].sort((a, b) => a - b);
       const full = [];
       for (let i = 1; i < edges.length; i++) {
@@ -196,15 +266,97 @@
         if (previous?.end === start) previous.end = end;
         else full.push({ start, end });
       }
-      const notice = document.getElementById('occupancy');
-      notice.hidden = full.length === 0;
-      notice.textContent = full.length ? 'Grand bassin inaccessible au public · ' + full.map(({ start, end }) => formatTime(start) + '–' + formatTime(end)).join(' · ') : '';
+      return full;
+    }
+
+    function openingSchedule(date) {
+      const weekday = new Date(date + 'T12:00:00Z').getUTCDay();
+      const vacation = schoolBreaks.some(([start, end]) => date >= start && date <= end);
+      const window = date === '2026-10-30' ? [720, 1020] : (vacation ? vacationWindows : windows)[weekday];
+      return { window, label: window.map(formatTime).join(' – ') };
+    }
+
+    function laneIntervals(grouped, id, from, to) {
+      const events = [...grouped.get(id)];
+      if (id !== 6018) events.push(...grouped.get(poolId));
+      events.sort((a, b) => a.start - b.start);
+      const intervals = [];
+      for (const event of events) {
+        const start = Math.max(from, event.start);
+        const end = Math.min(to, event.end);
+        if (end <= start) continue;
+        const last = intervals.at(-1);
+        if (last && start < last.end) last.end = Math.max(last.end, end);
+        else intervals.push({ start, end });
+      }
+      return intervals;
+    }
+
+    function intervalLabel({ start, end }) {
+      return formatTime(start) + '–' + formatTime(end);
+    }
+
+    const weekDay = new Intl.DateTimeFormat('fr-BE', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'numeric' });
+    const weekStart = new Intl.DateTimeFormat('fr-BE', { timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric' });
+    let activeWeek;
+
+    async function loadWeek(selected) {
+      const monday = new Date(selected);
+      monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7);
+      const key = monday.toISOString().slice(0, 10);
+      if (activeWeek?.key === key) return;
+      activeWeek?.controller.abort();
+      const controller = new AbortController();
+      const request = { key, controller };
+      activeWeek = request;
+      document.getElementById('week-title').textContent = 'Semaine du ' + weekStart.format(monday);
+      const status = document.getElementById('week-status');
+      const table = document.getElementById('week-table');
+      status.textContent = 'Chargement de la semaine…';
+      status.hidden = false;
+      table.hidden = true;
+      const timer = setTimeout(() => controller.abort(), 15000);
+      const dates = Array.from({ length: 5 }, (_, offset) => new Date(monday.getTime() + offset * 86400000));
+      const results = await Promise.allSettled(dates.map(async day => {
+        const date = day.toISOString().slice(0, 10);
+        const closure = closureLabel(date);
+        if (closure) return { closure };
+        const grouped = occupancyByResource(await getBookings(date, controller.signal), date);
+        const [from, to] = openingSchedule(date).window;
+        return { intervals: fullOccupancy(resourceIds.slice(0, 5).map(id => laneIntervals(grouped, id, from, to))) };
+      }));
+      clearTimeout(timer);
+      if (activeWeek !== request) return;
+      const rows = results.map((result, index) => {
+        const row = document.createElement('tr');
+        const day = document.createElement('th');
+        day.scope = 'row';
+        day.textContent = weekDay.format(dates[index]);
+        const slots = document.createElement('td');
+        if (result.status === 'rejected') {
+          slots.textContent = 'Données indisponibles';
+        } else if (result.value.closure) {
+          slots.dataset.state = 'reserved';
+          slots.textContent = result.value.closure;
+        } else if (result.value.intervals.length) {
+          slots.dataset.state = 'reserved';
+          slots.textContent = result.value.intervals.map(intervalLabel).join(' · ');
+        } else {
+          slots.textContent = 'Aucune indisponibilité';
+        }
+        row.append(day, slots);
+        return row;
+      });
+      document.getElementById('week-days').replaceChildren(...rows);
+      table.hidden = false;
+      status.hidden = true;
+      if (results.some(result => result.status === 'rejected')) activeWeek = undefined;
     }
 
     function renderOccupancy(date, grouped) {
-      const [from, to] = windows[new Date(date + 'T12:00:00Z').getUTCDay()];
+      const { window: [from, to], label } = openingSchedule(date);
       visibleWindow = { date, from, to };
-      document.getElementById('range').textContent = formatTime(from) + ' – ' + formatTime(to);
+      document.getElementById('range').textContent = label;
       const position = value => (value - from) / (to - from) * 100 + '%';
       const swimmingLanes = [];
       const ticks = [from];
@@ -227,18 +379,7 @@
         }
         if (!grouped || id === null) return column;
 
-        const events = [...grouped.get(id)];
-        if (id !== 6018) events.push(...grouped.get(poolId));
-        events.sort((a, b) => a.start - b.start);
-        const intervals = [];
-        for (const event of events) {
-          const start = Math.max(from, event.start);
-          const end = Math.min(to, event.end);
-          if (end <= start) continue;
-          const last = intervals.at(-1);
-          if (last && start < last.end) last.end = Math.max(last.end, end);
-          else intervals.push({ start, end });
-        }
+        const intervals = laneIntervals(grouped, id, from, to);
         if (id !== 6018) swimmingLanes.push(intervals);
 
         for (const { start, end } of intervals) {
@@ -254,7 +395,10 @@
         return column;
       });
       timeline.replaceChildren(...columns, nowLine);
-      showFullOccupancy(swimmingLanes);
+      const full = fullOccupancy(swimmingLanes);
+      const notice = document.getElementById('occupancy');
+      notice.hidden = full.length === 0;
+      notice.textContent = full.length ? 'Grand bassin inaccessible au public · ' + full.map(intervalLabel).join(' · ') : '';
       updateNow();
     }
 
@@ -262,6 +406,15 @@
       activeRequest?.abort();
       const request = new AbortController();
       activeRequest = request;
+      const closure = closureLabel(date);
+      document.querySelector('.scroller').hidden = Boolean(closure);
+      if (closure) {
+        visibleWindow = undefined;
+        document.getElementById('range').textContent = 'Fermée';
+        document.getElementById('occupancy').hidden = true;
+        setStatus('closed', closure);
+        return;
+      }
       const timer = setTimeout(() => request.abort(), 15000);
       setStatus('loading', 'Chargement…');
       renderOccupancy(date);
@@ -283,7 +436,9 @@
       time.dateTime = selectedDate.toISOString().slice(0, 10);
       time.textContent = dateLabel.format(selectedDate);
       heading.replaceChildren(time);
+      document.getElementById('date-picker').value = time.dateTime;
       loadDate(time.dateTime);
+      loadWeek(selectedDate);
     }
 
     function moveDay(offset) {
@@ -293,8 +448,18 @@
 
     document.getElementById('previous').addEventListener('click', () => moveDay(-1));
     document.getElementById('next').addEventListener('click', () => moveDay(1));
+    document.getElementById('previous-week').addEventListener('click', () => moveDay(-7));
+    document.getElementById('next-week').addEventListener('click', () => moveDay(7));
     document.getElementById('today').addEventListener('click', () => {
       selectedDate = todayInAndenne();
+      showDate();
+    });
+    document.getElementById('date-picker').addEventListener('change', event => {
+      if (!event.target.value) {
+        event.target.value = selectedDate.toISOString().slice(0, 10);
+        return;
+      }
+      selectedDate = new Date(event.target.value + 'T00:00:00Z');
       showDate();
     });
     showDate();
