@@ -75,6 +75,19 @@
     .week tbody th { width: 9rem; font-weight: 650; }
     .week td { font-variant-numeric: tabular-nums; }
     .week td[data-state="reserved"] { color: #46563d; font-weight: 750; }
+    @media (max-width: 36rem) {
+      .board { min-width: 17rem; }
+      .grid { grid-template-columns: 2.35rem repeat(6, minmax(0, 1fr)); gap: .15rem; }
+      .heads { font-size: .65rem; }
+      .heads span { overflow-wrap: anywhere; }
+      .tick { font-size: .63rem; }
+      .axis .tick { right: .15rem; }
+      .block { inset-inline: 0; padding-inline: .1rem; white-space: normal; overflow-wrap: anywhere; font-size: .61rem; line-height: 1; }
+      .block.short { font-size: .55rem; }
+      .now { inset-inline-start: 2.4rem; }
+      .week th, .week td { padding-inline: .35rem; }
+      .week tbody th { width: 7rem; }
+    }
   </style>
 </head>
 <body>
@@ -387,8 +400,8 @@
           block.className = (end - start) / (to - from) < .035 ? 'block short' : 'block';
           block.style.top = 'calc(' + position(start) + ' + 1px)';
           block.style.bottom = 'calc(' + ((to - end) / (to - from) * 100) + '% + 1px)';
-          block.textContent = formatTime(start) + '–' + formatTime(end);
-          block.title = 'Réservation · ' + block.textContent;
+          block.textContent = formatTime(start) + '–\u200b' + formatTime(end);
+          block.title = 'Réservation · ' + intervalLabel({ start, end });
           block.setAttribute('aria-label', block.title);
           column.append(block);
         }
